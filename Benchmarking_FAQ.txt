@@ -1,0 +1,20 @@
+
+**This document is intended as a starting point for anyone who is running DB benchmarks using SQL Bench.**
+
+It will help one understand what some of the basic underlying assumptions are to ensure that
+all benchmarks are valid and not misleading due to inconsistencies.
+
+Always check and/or establish the following:
+
+1.  Are you alone on the system under test?  You should be.  It is very important that equal system resources be available
+to both tests.  System resource contention can lead to invalid test results.
+
+2.  Are you consistently executing on an SSD or spinning drive?  SSD is the preferred method of execution.
+
+3.  Are you investigating a potential performance regression from TokuDB build to TokuDB build?
+
+4.  Are you investigating a potential performance disparity between TokuDB and InnoDB?
+
+5.  Are you installing a build from a tarball (preferred method of procuring builds)?
+
+6.  Make sure the TokuDB cache setting (tokudb_cache_size) and InnoDB cache setting (innodb_buffer_pool_size) are set to the same value.
