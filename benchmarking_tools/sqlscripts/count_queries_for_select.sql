@@ -5711,4 +5711,3 @@ select idn,count(distinct region) from bench1 group by idn;
 select idn,count(distinct region) from bench1 group by idn;
 select idn,count(distinct region) from bench1 group by idn;
 select idn,count(distinct region) from bench1 group by idn;
-drop table bench1;
