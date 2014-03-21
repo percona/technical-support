@@ -9,12 +9,16 @@ Always check and/or establish the following:
 1.  Are you alone on the system under test?  You should be.  It is very important that equal system resources be available
 to both tests.  System resource contention can lead to invalid test results.
 
-2.  Are you consistently executing on an SSD or spinning drive?  SSD is the preferred method of execution.
+2.  Are you using an OPTIMIZED build?  You should be.  The tests will run faster and the gain is what the customer will see.
 
-3.  Are you investigating a potential performance regression from TokuDB build to TokuDB build?
+3.  Are you consistently executing on an SSD or spinning drive?  SSD is the preferred method of execution.
 
-4.  Are you investigating a potential performance disparity between TokuDB and InnoDB?
+4.  Are you investigating a potential performance regression from TokuDB build to TokuDB build?
 
-5.  Are you installing a build from a tarball (preferred method of procuring builds)?
+5.  Are you investigating a potential performance disparity between TokuDB and InnoDB?
 
-6.  Make sure the TokuDB cache setting (tokudb_cache_size) and InnoDB cache setting (innodb_buffer_pool_size) are set to the same value.
+6.  Are you installing a build from a tarball (preferred method of procuring builds)?
+
+7.  Make sure the TokuDB cache setting (tokudb_cache_size) and InnoDB cache setting (innodb_buffer_pool_size) are set to the same value.
+
+8.  Understand if the test needs to induce I/O (out of memory) or reside fully in memory and set the TokuDB cache/InnoDB pool values respectively.
