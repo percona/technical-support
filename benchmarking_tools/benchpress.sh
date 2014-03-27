@@ -60,6 +60,10 @@ run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=
 run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
 #--connect-options=mysql_read_default_file=my.cnf
 
+##############################################
+# Compare results.
+#
+
 # Create result file by comparing output with given output file.
 cd $toku_output
 for f in *.result
