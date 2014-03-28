@@ -43,6 +43,9 @@ scripts/mysql_install_db --defaults-file=my.cnf --basedir=$PWD
 # Start mysqld.
 bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD &
 
+# Adding a sleep statement to allow MySQL to start cleanly
+sleep 6
+
 ##############################################
 # Run benchmarks.
 #
@@ -56,8 +59,8 @@ inno_output=inno_output
 mkdir $inno_output
 
 # actually run ALL the benchmarks.
-run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
-run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
+./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
+./run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
 #--connect-options=mysql_read_default_file=my.cnf
 
 ##############################################
@@ -81,7 +84,7 @@ popd # exit sql-bench directory.
 #
 
 # Shutdown the database
-bin/mysqladmin --user=root --defaults-file=my.cnf shutdown
+bin/mysqladmin --user=root --socket=$socket shutdown
 
 # Erase MySQL dir.
 popd # exit mysql directory.
