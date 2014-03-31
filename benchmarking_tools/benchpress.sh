@@ -1,13 +1,27 @@
 #!/bin/bash
 
 #############################################
+#
+# This script is designed to run sql-bench tests
+# and compare the results between TokuDB and InnoDB
+# as well as compare versions of TokuDB to TokuDB
+# during a release cycle to check for performance
+# regressions.  To run, simply copy benchpress.sh 
+# into a desired directory alongside a valid tar.gz
+# tarball.  Upon executing benchpress.sh, the tarball
+# will be extracted and tests will be run using TokuDB
+# and InnoDB tables. Upon completion, comparison reports
+# for each test will be generated in the same directory.
+# 
+
+#############################################
 # Setup MySQL Environment.
 #
 
 # Where are we?
 working_dir=$PWD
 
-# Find taball.
+# Find the tarball.
 num_found=0
 for i in *.tar.gz; do
   MYSQL_VERSION=${i%.tar.gz}
@@ -22,7 +36,7 @@ done
 # Delete any existing directories
 find . -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
 
-# Unpack tarball.
+# Unpack the tarball.
 tar xzf $MYSQL_VERSION.tar.gz
 
 # Change to MySQL dir.
@@ -31,8 +45,7 @@ pushd $MYSQL_VERSION
 # Create custom my.cnf
 socket=/tmp/benchmark.sock
 port=22666
-echo "
-[mysqld] 
+echo "[mysqld] 
 port=$port 
 socket=$socket
 " > my.cnf
@@ -69,7 +82,8 @@ mkdir $inno_output
 
 # Create result file by comparing output with given output file.
 cd $toku_output
-for f in *.result
+# We assume that ALL files in the new output directory are result files.
+for f in `ls`
 do
   result=`find ../$inno_output -name $f`
   echo "f = $f, result = $result"
