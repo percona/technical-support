@@ -42,7 +42,12 @@ tar xzf $MYSQL_VERSION.tar.gz
 # Change to MySQL dir.
 pushd $MYSQL_VERSION
 
-# Create custom my.cnf
+#################################################
+# This block creates a custom my.cnf which ensures
+# the TokuDB and InnoDB cache/pool sizes are
+# configured such that performance comparisons
+# are valid and interesting.
+#################################################
 socket=/tmp/benchmark.sock
 port=22666
 echo "[mysqld] 
