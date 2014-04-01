@@ -61,6 +61,10 @@ innodb_buffer_pool_size=2G
 tokudb_cache_size=2G
 tokudb_directio=ON
 
+[client]
+port=$port
+socket=$socket
+
 " > my.cnf
 
 # Initialize mysql
