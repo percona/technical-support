@@ -1,0 +1,4 @@
+This is a README for running iibench
+
+python bench/ibench/iibench.py --setup --db_socket=/tmp/mysql.sock --db_name=test --max_rows=10000000 --max_table_rows=10000000 --rows_per_report=100000 --engine=TokuDB --run_minutes=10 --tokudb_commit_sync=1 --max_ips=100000 
+
