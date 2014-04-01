@@ -48,6 +48,14 @@ port=22666
 echo "[mysqld] 
 port=$port 
 socket=$socket
+
+# specific : innodb
+innodb_buffer_pool_size=2G
+
+# specific : tokudb
+tokudb_cache_size=2G
+tokudb_directio=ON
+
 " > my.cnf
 
 # Initialize mysql
