@@ -68,11 +68,13 @@ tokudb_directio=ON
 [mysqladmin]
 port=$port
 socket=$socket
-
 " > my.cnf
 
 # Initialize mysql
-scripts/mysql_install_db --defaults-file=my.cnf --basedir=$PWD
+scripts/mysql_install_db --basedir=$PWD
+
+# Adding a sleep statement to ensure all plugin tables are created
+sleep 6
 
 # Start mysqld.
 bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD &
@@ -93,8 +95,8 @@ inno_output=inno_output
 mkdir $inno_output
 
 # actually run ALL the benchmarks.
-./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
 ./run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
+./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
 #--connect-options=mysql_read_default_file=my.cnf
 
 ##############################################
@@ -118,8 +120,8 @@ popd # exit sql-bench directory.
 # Cleanup:
 #
 
-# Shutdown the database
-bin/mysqladmin --user=root --defaults-file=my.cnf shutdown
+# Shutdown the database (--defaults-file needs to be the FIRST option in an argument list)
+bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 
 # Erase MySQL dir.
 popd # exit mysql directory.
