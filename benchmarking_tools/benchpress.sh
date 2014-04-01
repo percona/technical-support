@@ -50,7 +50,11 @@ pushd $MYSQL_VERSION
 #################################################
 socket=/tmp/benchmark.sock
 port=22666
-echo "[mysqld] 
+echo "[client]
+port=$port
+socket=$socket
+
+[mysqld] 
 port=$port 
 socket=$socket
 
@@ -60,6 +64,10 @@ innodb_buffer_pool_size=2G
 # specific : tokudb
 tokudb_cache_size=2G
 tokudb_directio=ON
+
+[mysqladmin]
+port=$port
+socket=$socket
 
 " > my.cnf
 
@@ -111,7 +119,7 @@ popd # exit sql-bench directory.
 #
 
 # Shutdown the database
-bin/mysqladmin --user=root --socket=$socket shutdown
+bin/mysqladmin --user=root --defaults-file=my.cnf shutdown
 
 # Erase MySQL dir.
 popd # exit mysql directory.
