@@ -94,9 +94,29 @@ mkdir $toku_output
 inno_output=inno_output
 mkdir $inno_output
 
+# Define the user that will be used to execute the tests.
+user=root
+
 # actually run ALL the benchmarks.
-./run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
-./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
+./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test
+./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test
+./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test --fast
+./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test --fast
+./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast
+./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast
+./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast --lock-tables
+./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast --lock-tables
+./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose
+./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose
+
+# Commented these following tests out because it appears that the above tests are
+# what is run by run.sql.bench.manual.bash.  We can run the two below for a shorter
+# subset if the need arises.  Additonally, the --user appears to be required for
+# some of the above tests.
+#
+#./run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
+#./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
+
 #--connect-options=mysql_read_default_file=my.cnf
 
 ##############################################
