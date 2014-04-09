@@ -2,16 +2,18 @@
 
 #############################################
 #
-# This script is designed to run sql-bench tests
-# and compare the results between TokuDB and InnoDB
-# as well as compare versions of TokuDB to TokuDB
+# This script is primarily designed to run sql-bench tests
+# and compare the results between TokuDB builds 
 # during a release cycle to check for performance
-# regressions.  To run, simply copy benchpress.sh 
-# into a desired directory alongside a valid tar.gz
+# regressions. It can also be used to verify performance
+# metrics in comparison to InnoDB. To run, simply copy 
+# benchpress.sh and sql.bench.summary.py (result parsing python script)
+# into an empty runtime directory alongside a valid tar.gz
 # tarball.  Upon executing benchpress.sh, the tarball
-# will be extracted and tests will be run using TokuDB
-# and InnoDB tables. Upon completion, comparison reports
-# for each test will be generated in the same directory.
+# will be extracted, tests will be run, all results
+# will be concatenated to a tracefile, and, upon completion, 
+# a summary report of the tracefile will be generated 
+# and placed in the sql-bench directory.
 # 
 
 #############################################
@@ -97,43 +99,101 @@ mkdir $inno_output
 # Define the user that will be used to execute the tests.
 user=root
 
-# actually run ALL the benchmarks.
-./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test
-./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test
-./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test --fast
-./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test --fast
-./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast
-./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast
-./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast --lock-tables
-./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast --lock-tables
-./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose
-./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose
+bindir=.
+testresultsdir=.
 
-# Commented these following tests out because it appears that the above tests are
-# what is run by run.sql.bench.manual.bash.  We can run the two below for a shorter
-# subset if the need arises.  Additonally, the --user appears to be required for
-# some of the above tests.
+engine=TokuDB
+system=`uname -s | tr [:upper:] [:lower:]`
+arch=`uname -m | tr [:upper:] [:lower:]`
+date=`date +%Y%m%d`
+
+# Run the tests.
+releasename=$MYSQL_VERSION
+tracefile=sql-bench-$releasename.trace
+summaryfile=sql-bench-$releasename.summary
+
+function mydate() {
+    date +"%Y%m%d %H:%M:%S"
+}
+
+function runtests() {
+    testargs=""
+    skip=""
+    for arg in $* ; do
+	if [[ $arg =~ "--skip=(.*)" ]] ; then
+	    skip=${BASH_REMATCH[1]}
+	else
+	    testargs="$testargs $arg"
+	fi
+    done
+for testname in test* ; do
+	#if [[ $testname =~ "^(.*).sh$" ]] ; then
+	#    t=${BASH_REMATCH[1]}
+	#else
+	#    continue
+	#fi
+	echo `mydate` $testname $testargs
+	if [ "$skip" != "" ] && [[ "$testname" =~ "$skip" ]]; then 
+	    echo "skip $testname"
+	else
+	    ./$testname $testargs
+	fi
+	echo `mydate`
+    done
+}
+
+>$testresultsdir/$tracefile
+
+runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose --small-test         >> $testresultsdir/$tracefile 2>&1
+runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose --small-test --fast  >> $testresultsdir/$tracefile 2>&1
+runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose                      >> $testresultsdir/$tracefile 2>&1
+runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast  >> $testresultsdir/$tracefile 2>&1
+runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast --lock-tables >> $testresultsdir/$tracefile 2>&1
+
+../sql.bench.summary.py < $testresultsdir/$tracefile > $testresultsdir/$summaryfile
+
+###############################################
+
+# The following commented tests use the default ./run-all-tests wrapper which generate 
+# one log per run, or multiple test logs. We have elected to use
+# the above runtests function created by Rich Prohaska since the output is directed
+# to one single result file and it can be parsed/summarized by the sql.bench.summary.py script.
+# It may at some point prove useful to use the ./run-all-tests wrapper scripts so the
+# code and subsequent diff calls will be kept (but commented).
 #
-#./run-all-tests --log --dir=$toku_output --socket=$socket --create-options=ENGINE=TokuDB
-#./run-all-tests --log --dir=$inno_output --socket=$socket --create-options=ENGINE=InnoDB
-
-#--connect-options=mysql_read_default_file=my.cnf
+#./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test
+#./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test
+#./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --small-test --fast
+#./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --small-test --fast
+#./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast
+#./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast
+#./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose --fast --lock-tables
+#./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose --fast --lock-tables
+#./run-all-tests --create-options=ENGINE=TokuDB --log --dir=$toku_output --socket=$socket --user=$user --verbose
+#./run-all-tests --create-options=ENGINE=InnoDB --log --dir=$inno_output --socket=$socket --user=$user --verbose
 
 ##############################################
-# Compare results.
+#
+# This is the block that compares the results from the above
+# commented section of ./run-all-tests. It works great for an
+# TokuDB to InnoDB table performance comparison.
 #
 
 # Create result file by comparing output with given output file.
-cd $toku_output
+#cd $toku_output
 # We assume that ALL files in the new output directory are result files.
-for f in `ls`
-do
-  result=`find ../$inno_output -name $f`
-  echo "f = $f, result = $result"
+#for f in `ls`
+#do
+#  result=`find ../$inno_output -name $f`
+#  echo "f = $f, result = $result"
 # Copy output file to parent directory.
-  diff $f $result > $working_dir/"$f".diff
-done
-cd .. # exit output directory.
+#  diff $f $result > $working_dir/"$f".diff
+#done
+#cd .. # exit output directory.
+
+#############################################
+
+
 popd # exit sql-bench directory.
 
 #############################################
@@ -143,6 +203,6 @@ popd # exit sql-bench directory.
 # Shutdown the database (--defaults-file needs to be the FIRST option in an argument list)
 bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 
-# Erase MySQL dir.
+# Erase MySQL dir. This is probably not a good idea since you may lose the log files.
 popd # exit mysql directory.
 #rm -rf $MYSQL_VERSION
