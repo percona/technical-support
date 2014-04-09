@@ -21,7 +21,7 @@
 #
 
 # Where are we?
-working_dir=$PWD
+workingdir=$PWD
 
 # Find the tarball.
 num_found=0
@@ -150,7 +150,7 @@ runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast  >> $testresultsdir/$tracefile 2>&1
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast --lock-tables >> $testresultsdir/$tracefile 2>&1
 
-../sql.bench.summary.py < $testresultsdir/$tracefile > $testresultsdir/$summaryfile
+$workingdir/sql.bench.summary.py < $testresultsdir/$tracefile > $testresultsdir/$summaryfile
 
 ###############################################
 
