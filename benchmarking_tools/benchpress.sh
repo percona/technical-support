@@ -102,7 +102,15 @@ user=root
 bindir=.
 testresultsdir=.
 
+##############################################
+# Specify the engine to be used during the test. The value will stay
+# hard-coded as TokuDB since we have established that the script will be 
+# used primarily to compare TokuDB to TokuDB, but this value could just
+# as easily be toggled to InnoDB and re-run.
+
 engine=TokuDB
+#engine=InnoDB
+
 system=`uname -s | tr [:upper:] [:lower:]`
 arch=`uname -m | tr [:upper:] [:lower:]`
 date=`date +%Y%m%d`
