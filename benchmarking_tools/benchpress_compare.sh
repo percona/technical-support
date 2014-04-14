@@ -165,7 +165,25 @@ runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast  >> $testresultsdir_1/$tracefile_1 2>&1
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast --lock-tables >> $testresultsdir_1/$tracefile_1 2>&1
 
-$workingdir/sql.bench.summary.py < $testresultsdir_1/$tracefile_1 > $testresultsdir_1/$summaryfile_1
+while read l ; do
+   if [[ $l =~ ^([0-9]{8}\ [0-9]{2}:[0-9]{2}:[0-9]{2})(.*)$ ]] ; then
+        t=${BASH_REMATCH[1]}
+        cmd=${BASH_REMATCH[2]}
+        if [ -z "$cmd" ] ; then
+            let duration=$(date -d "$t" +%s)-$(date -d "$tlast" +%s)
+            printf "%4s %s %8d %s\n" "$status" "$tlast" "$duration" "$cmdlast"
+        else
+            cmdlast=$cmd
+            tlast=$t
+            status=PASS
+        fi
+   else
+        if [[ $l =~ Got\ error|Died ]] ; then
+        status=FAIL
+        fi
+   fi
+done < $testresultsdir_1/$tracefile_1 > $testresultsdir_1/$summaryfile_1
+
 
 ###############################################
 
@@ -333,7 +351,25 @@ runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast  >> $testresultsdir_2/$tracefile_2 2>&1
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast --lock-tables >> $testresultsdir_2/$tracefile_2 2>&1
 
-$workingdir/sql.bench.summary.py < $testresultsdir_2/$tracefile_2 > $testresultsdir_2/$summaryfile_2
+while read l ; do
+   if [[ $l =~ ^([0-9]{8}\ [0-9]{2}:[0-9]{2}:[0-9]{2})(.*)$ ]] ; then
+        t=${BASH_REMATCH[1]}
+        cmd=${BASH_REMATCH[2]}
+        if [ -z "$cmd" ] ; then
+            let duration=$(date -d "$t" +%s)-$(date -d "$tlast" +%s)
+            printf "%4s %s %8d %s\n" "$status" "$tlast" "$duration" "$cmdlast"
+        else
+            cmdlast=$cmd
+            tlast=$t
+            status=PASS
+        fi
+   else
+        if [[ $l =~ Got\ error|Died ]] ; then
+        status=FAIL
+        fi
+   fi
+done < $testresultsdir_2/$tracefile_2 > $testresultsdir_2/$summaryfile_2
+
 popd # exit sql-bench directory.
 
 #############################################

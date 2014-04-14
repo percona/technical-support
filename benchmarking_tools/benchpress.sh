@@ -175,7 +175,7 @@ while read l ; do
 	status=FAIL
         fi
    fi
-done <$testresultsdir/$tracefile >$testresultsdir/$summaryfile
+done < $testresultsdir/$tracefile > $testresultsdir/$summaryfile
 
 ###############################################
 
