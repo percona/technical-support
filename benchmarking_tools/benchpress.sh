@@ -7,9 +7,9 @@
 # during a release cycle to check for performance
 # regressions. It can also be used to verify performance
 # metrics in comparison to InnoDB. To run, simply copy 
-# benchpress.sh and sql.bench.summary.py (result parsing python script)
-# into an empty runtime directory alongside a valid tar.gz
-# tarball.  Upon executing benchpress.sh, the tarball
+# benchpress.sh into an empty runtime directory 
+# along with a valid tar.gz tarball.
+# Upon executing benchpress.sh, the tarball
 # will be extracted, tests will be run, all results
 # will be concatenated to a tracefile, and, upon completion, 
 # a summary report of the tracefile will be generated 
@@ -158,7 +158,24 @@ runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast  >> $testresultsdir/$tracefile 2>&1
 runtests --create-options=engine=$engine --socket=$socket --user=$user --verbose              --fast --lock-tables >> $testresultsdir/$tracefile 2>&1
 
-$workingdir/sql.bench.summary.py < $testresultsdir/$tracefile > $testresultsdir/$summaryfile
+while read l ; do
+   if [[ $l =~ ^([0-9]{8}\ [0-9]{2}:[0-9]{2}:[0-9]{2})(.*)$ ]] ; then
+	t=${BASH_REMATCH[1]}
+        cmd=${BASH_REMATCH[2]}
+        if [ -z "$cmd" ] ; then
+            let duration=$(date -d "$t" +%s)-$(date -d "$tlast" +%s)
+            printf "%4s %s %8d %s\n" "$status" "$tlast" "$duration" "$cmdlast"
+        else
+	    cmdlast=$cmd
+            tlast=$t
+            status=PASS
+        fi
+   else
+	if [[ $l =~ Got\ error|Died ]] ; then
+	status=FAIL
+        fi
+   fi
+done <$testresultsdir/$tracefile >$testresultsdir/$summaryfile
 
 ###############################################
 
