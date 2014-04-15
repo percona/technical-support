@@ -253,7 +253,7 @@ pushd $basedir_2
 # are valid and interesting.
 #################################################
 socket=/tmp/benchmark_2.sock
-port=22666
+port=22667
 echo "[client]
 port=$port
 socket=$socket
