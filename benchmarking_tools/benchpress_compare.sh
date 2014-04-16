@@ -6,8 +6,7 @@
 # and compare the results between two TokuDB builds 
 # during a release cycle to check for performance
 # regressions. It requires two tar.gz tarballs as arguments 
-# and sql.bench.summary.py (result parsing python script)
-# placed into an empty runtime directory.
+# that are placed into an empty runtime directory.
 # Upon executing benchpress_compare.sh, the first tarball
 # will be extracted, tests will be run whose results
 # will be concatenated to a tracefile and upon completion,
@@ -16,7 +15,8 @@
 # the second tarball will be extracted, the same tests will be run
 # whose results will be concatenated to a tracefile and upon completion,
 # a summary report of the tracefile will be generated and placed
-# in the sql-bench directory.
+# in the sql-bench directory. At the end, a file named diff.results
+# will highlight any differences (i.e. performance improvements or regressions).
 # 
 
 if [ $# -eq 0 ]; then
@@ -106,8 +106,14 @@ mkdir $inno_output
 # Define the user that will be used to execute the tests.
 user=root
 
-bindir_1=.
-testresultsdir_1=.
+# Define the sql-bench directory and the location
+# where the test results will be written.
+testresultsdir_1=$PWD
+
+# Ensure that all files within the sql-bench directory (also
+# defined as the $testresultsdir_1) have the execute permission.
+chmod +x $testresultsdir_1/*
+
 
 ##############################################
 # Specify the engine to be used during the test. The value will stay
@@ -301,8 +307,14 @@ mkdir $inno_output
 # Define the user that will be used to execute the tests.
 user=root
 
-bindir_2=.
-testresultsdir_2=.
+# Define the sql-bench directory and the location
+# where the test results will be written.
+testresultsdir_2=$PWD
+
+# Ensure that all files within the sql-bench directory (also
+# defined as the $testresultsdir_2) have the execute permission.
+chmod +x $testresultsdir_2/*
+
 
 system=`uname -s | tr [:upper:] [:lower:]`
 arch=`uname -m | tr [:upper:] [:lower:]`

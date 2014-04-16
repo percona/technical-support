@@ -99,8 +99,13 @@ mkdir $inno_output
 # Define the user that will be used to execute the tests.
 user=root
 
-bindir=.
-testresultsdir=.
+# Define the sql-bench directory and the location
+# where the test results will be written.
+testresultsdir=$PWD
+
+# Ensure that all files within the sql-bench directory (also
+# defined as the $testresultsdir) have the execute permission.
+chmod +x $testresultsdir/*
 
 ##############################################
 # Specify the engine to be used during the test. The value will stay
@@ -228,6 +233,5 @@ popd # exit sql-bench directory.
 # Shutdown the database (--defaults-file needs to be the FIRST option in an argument list)
 bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 
-# Erase MySQL dir. This is probably not a good idea since you may lose the log files.
-popd # exit mysql directory.
-#rm -rf $MYSQL_VERSION
+# Exit mysql directory.
+popd 
