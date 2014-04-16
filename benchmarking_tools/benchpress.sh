@@ -79,7 +79,7 @@ scripts/mysql_install_db --basedir=$PWD
 sleep 6
 
 # Start mysqld.
-bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD &
+bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD --core-file &
 
 # Adding a sleep statement to allow MySQL to start cleanly
 sleep 6
