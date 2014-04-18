@@ -6,7 +6,8 @@
 # and compare the results between two TokuDB builds 
 # during a release cycle to check for performance
 # regressions. It requires two tar.gz tarballs as arguments 
-# that are placed into an empty runtime directory.
+# that are placed into an empty runtime directory
+# and pct-diff.pl which will process the summary files.
 # Upon executing benchpress_compare.sh, the first tarball
 # will be extracted, tests will be run whose results
 # will be concatenated to a tracefile and upon completion,
@@ -15,7 +16,7 @@
 # the second tarball will be extracted, the same tests will be run
 # whose results will be concatenated to a tracefile and upon completion,
 # a summary report of the tracefile will be generated and placed
-# in the sql-bench directory. At the end, a file named diff.results
+# in the sql-bench directory. At the end, a file named results.diff
 # will highlight any differences (i.e. performance improvements or regressions).
 # 
 
@@ -395,4 +396,4 @@ bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 popd # exit the basedir from the second run upon completion of the tests.
 
 # Use Tim's script to diff the two files
-diff $testresultsdir_1/$summaryfile_1 $testresultsdir_2/$summaryfile_2 > $workingdir/results.diff
+pct-diff.pl $testresultsdir_1/$summaryfile_1 $testresultsdir_2/$summaryfile_2 > $workingdir/results.diff
