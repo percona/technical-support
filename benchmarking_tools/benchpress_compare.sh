@@ -46,8 +46,11 @@ basedir_2=`echo $tarball_2 | sed -r 's/\.[[:alnum:]]+\.[[:alnum:]]+$//'`
 # Delete any existing directories
 find . -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \;
 
-# Unpack the tarball.
+# Unpack both tarballs consecutively.  This is done since
+# we may have to copy a modified test into the sql-bench
+# directory before the test execution phase.
 tar xzf $tarball_1
+tar xzf $tarball_2
 
 # Change to basedir_1.
 pushd $basedir_1
@@ -245,10 +248,6 @@ bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 
 # Exit basedir_1.
 popd # exit the basedir from the first run upon completion of the tests.
-
-
-# Unpack the tarball.
-tar xzf $tarball_2
 
 # Change to basedir_2.
 pushd $basedir_2
