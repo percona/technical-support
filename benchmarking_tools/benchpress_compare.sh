@@ -395,4 +395,4 @@ bin/mysqladmin --defaults-file=my.cnf --user=root shutdown
 popd # exit the basedir from the second run upon completion of the tests.
 
 # Use Tim's script to diff the two files
-pct-diff.pl $testresultsdir_1/$summaryfile_1 $testresultsdir_2/$summaryfile_2 > $workingdir/results.diff
+$workingdir/pct-diff.pl $testresultsdir_1/$summaryfile_1 $testresultsdir_2/$summaryfile_2 > $workingdir/results.diff
