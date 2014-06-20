@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# This script will test hot backup functionality by running the
+# hot backup while a "gauntlet" of operations within a Mongo DB
+# are running.  The gauntlet.js file contains the operations that
+# are executed. Additionally, this script references subordinate
+# scripts such as mkmon, mongo-is-up, mongo-is-down and others that
+# should be copied to ~/bin (bin directory off of the user's home 
+# directory).  Add the ~/bin directory to the $PATH ENV variable and
+# the script will then function correctly.
+
+
+# Here are series of defensive checks to make sure the environment
+# is ready for test execution.  The ENV variables listed are taken
+# from machine.config which should be sourced via the user's .bashrc.
+# This will ensure that all test execution happens under the tester's shell.
+
 if [ -z "$MONGO_DIR" ]; then
     echo "Need to set MONGO_DIR"
     exit 1
@@ -21,7 +36,12 @@ if [ ! -d "$HOT_BACKUP_DIR" ]; then
     exit 1
 fi
 
-export TARBALL=tokumx-e-1.4.2-rc.0-linux-x86_64-main.tar.gz
+# The TARBALL variable will ultimately be passed to mkmon
+# which will process a path from Tim's nfs mounted archive of tarballs.
+# It will require that this archive is mounted and ready to go.
+# Most recently, this location was /nfs/tmcsrv but please verify.
+
+export TARBALL=tokumx-e-1.4.2-linux-x86_64-main.tar.gz
 export MONGO_TYPE=tokumx
 export MONGO_REPLICATION=Y
 
