@@ -1,0 +1,56 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]; then
+  echo "usage: mstart-backup <datadir> [<my.cnf file>]"
+  exit 1
+fi
+
+if [ -z "${MYSQL_SOCKET}" ]; then
+    echo "Need to set MYSQL_SOCKET"
+    exit 1
+fi
+if [ -z "${MYSQL_PORT}" ]; then
+    echo "Need to set MYSQL_PORT"
+    exit 1
+fi
+
+# rename existing *.err files
+for fname in ${1}/*.err ; do
+    echo "renaming existing eror log: ${fname} to ${fname}.ORIGINAL"
+    mv ${fname} ${fname}.ORIGINAL
+done
+
+if [ -f my.cnf ]; then
+    bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} --datadir=$1 &
+elif [ $# -eq 2 ]; then
+    bin/mysqld_safe --defaults-file=$2 --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} --datadir=$1 &
+else
+    echo "my.cnf must be in the current directory or you must supply the full name/path!!!"
+    exit
+fi
+
+echo "waiting for mysql to start..."
+sleep 2
+while ! [ -S "${MYSQL_SOCKET}" ]; do
+    sleep 2
+done
+bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show engines;" | grep TokuDB > /dev/null 2>&1
+if [ "$?" -eq "0" ]; then
+    printf "\nTokuDB engine loaded.\n\n"
+else
+    printf "\nTokuDB engine IS NOT loaded.\n\n"
+fi    
+
+grep -i error ${1}/*.err
+
+if [ $? -ne 1 ] ; then
+    echo "found error(s) in the log"
+    read
+fi
+
+grep -i warning ${1}/*.err
+
+if [ $? -ne 1 ] ; then
+    echo "found warning(s) in the log"
+    read
+fi
