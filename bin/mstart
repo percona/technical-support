@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# pass the .cnf file you want to use, otherwise MySQL picks up whatever one it wants
+# run it from the mysql directory
+
+if [ -z "${MYSQL_SOCKET}" ]; then
+    echo "Need to set MYSQL_SOCKET"
+    exit 1
+fi
+if [ -z "${MYSQL_PORT}" ]; then
+    echo "Need to set MYSQL_PORT"
+    exit 1
+fi
+
+MALLOC_LIBRARY=""
+# if jemalloc exists, use it!
+if [ -e $PWD/lib/mysql/libjemalloc.so ]; then
+    echo "found lib/mysql/libjemalloc.so, providing it to mysqld_safe"
+    MALLOC_LIBRARY=--malloc-lib=$PWD/lib/mysql/libjemalloc.so
+fi
+
+if [ -f my.cnf ]; then
+    bin/mysqld_safe --defaults-file=my.cnf --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} ${MALLOC_LIBRARY} &
+elif [ $# -eq 1 ]; then
+    bin/mysqld_safe --defaults-file=$1 --basedir=$PWD --core-file --core-file-size=unlimited --socket=${MYSQL_SOCKET} --port=${MYSQL_PORT} ${MALLOC_LIBRARY} &
+else
+    echo "you must supply a configuration file!!!"
+    exit
+fi
+
+echo "waiting for mysql to start..."
+sleep 2
+while ! [ -S "${MYSQL_SOCKET}" ]; do
+    sleep 2
+done
+sleep 10
+bin/mysql --user=root --socket=${MYSQL_SOCKET} -e "show engines;" | grep TokuDB > /dev/null 2>&1
+if [ "$?" -eq "0" ]; then
+    printf "\nTokuDB engine loaded.\n\n"
+else
+    printf "\nTokuDB engine IS NOT loaded.\n\n"
+fi    
