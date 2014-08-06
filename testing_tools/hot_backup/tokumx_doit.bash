@@ -14,7 +14,10 @@
 # is ready for test execution.  The ENV variables listed are taken
 # from machine.config which should be sourced via the user's .bashrc.
 # This will ensure that all test execution happens under the tester's shell.
-
+if [ -z "MONGO_MULTI_DIR" ]; then
+    echo "Need to set MONGO_MULTI_DIR"
+    exit 1
+fi
 if [ -z "$MONGO_DIR" ]; then
     echo "Need to set MONGO_DIR"
     exit 1
@@ -23,6 +26,15 @@ if [ ! -d "$MONGO_DIR" ]; then
     echo "Need to create directory MONGO_DIR"
     exit 1
 fi
+if [ -z "$MONGO_LOG_DIR" ]; then
+    echo "Need to set MONGO_LOG_DIR"
+    exit 1
+fi
+if [ ! -d "$MONGO_LOG_DIR" ]; then
+    echo "Need to create directory MONGO_LOG_DIR"
+    exit 1
+fi
+
 if [ "$(ls -A $MONGO_DIR)" ]; then
     echo "$MONGO_DIR contains files, cannot run script"
     exit 1
@@ -41,7 +53,7 @@ fi
 # It will require that this archive is mounted and ready to go.
 # Most recently, this location was /nfs/tmcsrv but please verify.
 
-export TARBALL=tokumx-e-1.4.2-linux-x86_64-main.tar.gz
+export TARBALL=tokumx-e-1.5.0-linux-x86_64-debug-main.tar.gz
 export MONGO_TYPE=tokumx
 export MONGO_REPLICATION=Y
 
@@ -157,7 +169,16 @@ mongo-is-down
 echo "  .. checking backup database"
 
 # startup backup database
-export MONGO_DATA_DIR=$HOT_BACKUP_DIR
+# and now adding references to multi-dir backup
+# directory structure.
+if [ ${MONGO_MULTI_DIR} == 1 ]; then
+    echo "  .. starting mongo with different directories for data and logs"
+    export MONGO_DATA_DIR=$HOT_BACKUP_DIR/data
+    export MONGO_LOG_DIR=$HOT_BACKUP_DIR/log
+else
+    echo "  .. starting mongo with one directory for data and logs" 
+    export MONGO_DATA_DIR=$HOT_BACKUP_DIR
+fi
 if [ ${MONGO_TYPE} == "tokumx" ]; then
     mongo-start-tokumx-fork
 else
