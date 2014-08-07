@@ -14,7 +14,7 @@
 # is ready for test execution.  The ENV variables listed are taken
 # from machine.config which should be sourced via the user's .bashrc.
 # This will ensure that all test execution happens under the tester's shell.
-if [ -z "MONGO_MULTI_DIR" ]; then
+if [ -z "$MONGO_MULTI_DIR" ]; then
     echo "Need to set MONGO_MULTI_DIR"
     exit 1
 fi
@@ -168,9 +168,8 @@ mongo-is-down
 
 echo "  .. checking backup database"
 
-# startup backup database
-# and now adding references to multi-dir backup
-# directory structure.
+# Adding logic to recognize the references 
+# to multi-dir backup directory structure.
 if [ ${MONGO_MULTI_DIR} == 1 ]; then
     echo "  .. starting mongo with different directories for data and logs"
     export MONGO_DATA_DIR=$HOT_BACKUP_DIR/data
@@ -179,6 +178,8 @@ else
     echo "  .. starting mongo with one directory for data and logs" 
     export MONGO_DATA_DIR=$HOT_BACKUP_DIR
 fi
+
+# startup backup database
 if [ ${MONGO_TYPE} == "tokumx" ]; then
     mongo-start-tokumx-fork
 else
@@ -186,7 +187,9 @@ else
 fi
 mongo-is-up
 
-# check database hashes
+# check database hashes (there is no need to check 
+# the integrity of the logs since the server
+# will not start if the logs lack integrity)
 $MONGO_DIR/bin/mongo admin --eval "printjson(db.runCommand('dbhash').md5)" | tee -a $LOG_FILE_BACKUP
 $MONGO_DIR/bin/mongo db2   --eval "printjson(db.runCommand('dbhash').md5)" | tee -a $LOG_FILE_BACKUP
 $MONGO_DIR/bin/mongo db4   --eval "printjson(db.runCommand('dbhash').md5)" | tee -a $LOG_FILE_BACKUP
