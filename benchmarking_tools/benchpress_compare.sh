@@ -18,7 +18,8 @@
 # a summary report of the tracefile will be generated and placed
 # in the sql-bench directory. At the end, a file named results.diff
 # will highlight any differences (i.e. performance improvements or regressions).
-# 
+# The script pct-diff.pl is the script that processes the two summary
+# files. 
 
 if [ $# -eq 0 ]; then
   echo "usage: benchpress_compare.sh <tarball_1.tar.gz> <tarball_2.tar.gz>"
