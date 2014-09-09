@@ -65,6 +65,12 @@ my_mysqld_pid=$!
 # Adding a sleep statement to allow MySQL to start cleanly
 sleep 6
 
+# Run some operations against the MySQL DB
+echo
+echo "Running some operations against the DB"
+echo
+bin/mysql --user=root --socket=/tmp/dirty_upgrade_1.sock test < ${workingdir}/operations.sql
+
 # Kill mysqld to effectively create a "dirty" shutdown
 kill -9 $my_mysqld_pid
 
@@ -102,31 +108,45 @@ my_dirty_upgraded_mysqld_pid=$!
 # Adding a sleep statement to allow MySQL the opportunity to start cleanly
 sleep 10
 
-if [ -z "${my_dirty_upgraded_mysqld_pid}" ]; then
+my_dirty_upgraded_mysqld_verification=`ps -ef | grep mysqld | grep ${my_dirty_upgraded_mysqld_pid} | awk '{print$2}'`
+
+if [ -z "${my_dirty_upgraded_mysqld_verification}" ]; then
+    echo
+    echo "###############################################################################"
+    echo
     echo "MySQL did not start. The DIRTY upgrade FAILED. See the MySQL error log to diagnose further."
     echo
+    echo "###############################################################################"
+    echo
     echo 
-
-    exit 1
 fi
 
-echo
-echo "###############################################################################"
-echo
-echo "The DIRTY upgrade of TokuDB PASSED and was successful.  The PID of your new mysqld process is: "$my_dirty_upgraded_mysqld_pid
-echo
-echo "###############################################################################"
-echo
-echo
+if [ "${my_dirty_upgraded_mysqld_pid}" == "${my_dirty_upgraded_mysqld_verification}" ]; then
+    echo
+    echo "###############################################################################"
+    echo
+    echo "The DIRTY upgrade of TokuDB PASSED and was successful.  The PID of your new mysqld process is: "$my_dirty_upgraded_mysqld_pid
+    echo
+    echo "###############################################################################"
+    echo
+    echo
 
-# Shutdown the server
-echo "Shutting down the MySQL DB process gracefully..."
-echo
-bin/mysqladmin shutdown --socket=/tmp/dirty_upgrade_2.sock --user=root
+    # Verify data in the DB (needs work)
+    echo "Verifying the data in all tables"
+    echo
+    bin/mysql --user=root --socket=/tmp/dirty_upgrade_2.sock < ${workingdir}/verify.sql  
+    echo
+    echo "CHECKSUM from the verify script should be 420."
+
+    # Shutdown the server
+    echo "Shutting down the MySQL DB process gracefully..."
+    echo
+    bin/mysqladmin shutdown --socket=/tmp/dirty_upgrade_2.sock --user=root
 
 
-# Adding a sleep statement to allow MySQL to shut down cleanly
-sleep 8
+   # Adding a sleep statement to allow MySQL to shut down cleanly
+   sleep 8
+fi
 
 popd > /dev/null
 
@@ -186,6 +206,12 @@ bin/mysqld --basedir=$PWD --datadir=./data --socket=/tmp/clean_upgrade_1.sock &
 # Adding a sleep statement to allow MySQL the opportunity to start cleanly
 sleep 10
 
+# Run some operations against the MySQL DB
+echo
+echo "Running some operations against the DB"
+echo
+bin/mysql --user=root --socket=/tmp/clean_upgrade_1.sock test < ${workingdir}/operations.sql
+
 # Shutdown mysqld cleanly (correctly)
 bin/mysqladmin shutdown --socket=/tmp/clean_upgrade_1.sock --user=root
 
@@ -230,6 +256,14 @@ if [ -z "${my_clean_upgraded_mysqld_pid}" ]; then
 
     exit 1
 fi
+
+# Verify data in the DB (needs work)
+echo
+echo "Verifying the data in all tables"
+echo
+bin/mysql --user=root --socket=/tmp/clean_upgrade_2.sock < ${workingdir}/verify.sql
+echo
+echo "CHECKSUM from the verify script should be 420"
 
 echo
 echo "###############################################################################"
