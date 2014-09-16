@@ -8,6 +8,10 @@ if [ ! -d "$DB_DIR" ]; then
     echo "Need to create directory DB_DIR"
     exit 1
 fi
+if [ -z "$MYSQL_MULTI_DIR" ]; then
+    echo "Need to set MYSQL_MULTI_DIR"
+    exit 1
+fi
 
 
 export HOT_BACKUP_DIR=$DB_DIR/hot-backup-dir
@@ -38,11 +42,12 @@ fi
 if [ -z "$MYSQL_STORAGE_ENGINE" ]; then
     export MYSQL_STORAGE_ENGINE=tokudb
 fi
-if [ -z "$TARBALL" ]; then
-    export TARBALL=blank-tokudb.750.hb20140912-mysql-5.5.39
-    #export TARBALL=blank-toku715.e-mysql-5.5.36
-    #export TARBALL=blank-toku715.e-mariadb-5.5.36
-fi
+#if [ -z "$TARBALL" ]; then
+#    export TARBALL=mysql-5.5.39-tokudb-hb.20140913-e-linux-x86_64
+#    export TARBALL=tl_td_mysql-5.5.39-tokudb-hb.20140913-e-linux-x86_64
+#    #export TARBALL=blank-toku715.e-mysql-5.5.36
+#    #export TARBALL=blank-toku715.e-mariadb-5.5.36
+#fi
 if [ -z "$TOKUDB_COMPRESSION" ]; then
     export TOKUDB_COMPRESSION=zlib
 fi
@@ -68,9 +73,11 @@ export TOKUDB_ROW_FORMAT=tokudb_${TOKUDB_COMPRESSION}
 
 echo "`date` | Creating database from ${TARBALL} in ${DB_DIR}"
 pushd $DB_DIR
-mkdb-quiet $TARBALL
+#mkdb-quiet $TARBALL
+mkdir $(TOKUDB_DATA_DIR}
+mkdir ${TOKUDB_LOG_DIR}
+mkdir ${TOKUDB_BINLOG}
 popd
-
 
 mkdir $HOT_BACKUP_DIR
 
@@ -78,11 +85,17 @@ mkdir $HOT_BACKUP_DIR
 echo "`date` | Configuring my.cnf and starting database"
 pushd $DB_DIR
 
+echo "server-id=1" >> my.cnf
+echo "binlog_format=ROW" >> my.cnf
+echo "log_bin=${TOKUDB_BINLOG}" >> my.cnf
+echo "tokudb_data_dir=${TOKUDB_DATA_DIR}" >> my.cnf
+echo "tokudb_log_dir=${TOKUDB_LOG_DIR}" >> my.cnf
 echo "tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE}" >> my.cnf
 echo "tokudb_row_format=${TOKUDB_ROW_FORMAT}" >> my.cnf
 echo "tokudb_backup_throttle=${TOKUDB_BACKUP_THROTTLE}" >> my.cnf
 echo "tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE}" >> my.cnf
 echo "tokudb_directio=${TOKUDB_DIRECTIO}" >> my.cnf
+
 mstart
 popd
 
@@ -118,13 +131,13 @@ $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} test -e "set glo
 echo "`date` | Waiting for backup to finish"
 backupDone=0
 while [ ${backupDone} == 0 ] ; do
+
+echo "`date` | Speeding up the backup copier"
+$DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} test -e "set global tokudb_backup_throttle=999999999"
+
+echo "`date` | Waiting for backup to finish"
+backupDone=0
+while [ ${backupDone} == 0 ] ; do
     $DB_DIR/bin/mysql --user=${MYSQL_USER} --socket=${MYSQL_SOCKET} test -e "show processlist" | grep "backup to" > /dev/null
     retVal=$?
     if [ ${retVal} -eq 1 ] ; then
-        backupDone=1
-    fi
-    sleep 10
-done
-
-echo "Performing backup verification"
-./verify-backup.bash
