@@ -30,10 +30,11 @@ if [ -z "$MYSQL_VERSION" ]; then
     export MYSQL_VERSION=5.5.37
 fi
 if [ -z "$MYSQL_STORAGE_ENGINE" ]; then
-    export MYSQL_STORAGE_ENGINE=tokudb
+   export MYSQL_STORAGE_ENGINE=tokudb
+#   export MYSQL_STORAGE_ENGINE=innodb
 fi
 if [ -z "$TARBALL" ]; then
-    export TARBALL=blank-toku716.e-mysql-5.5.37
+    export TARBALL=blank-percona-5_6_21.688-tokubackup-0.0.7
 fi
 if [ -z "$TOKUDB_COMPRESSION" ]; then
     export TOKUDB_COMPRESSION=zlib
@@ -103,10 +104,12 @@ popd
 echo "Configuring my.cnf and starting database"
 pushd $DB_DIR
 
+#echo "innodb_use_native_aio=0" >> my.cnf
 echo "tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE}" >> my.cnf
 echo "tokudb_row_format=${TOKUDB_ROW_FORMAT}" >> my.cnf
 echo "tokudb_backup_throttle=${TOKUDB_BACKUP_THROTTLE}" >> my.cnf
 echo "tokudb_cache_size=${TOKUDB_DIRECTIO_CACHE}" >> my.cnf
+echo "explicit_defaults_for_timestamp" >> my.cnf
 if [ ${DIRECTIO} == "Y" ]; then
     echo "tokudb_directio=1" >> my.cnf
 else

@@ -37,7 +37,7 @@ if [ ${deleteFinalBackup} == "Y" ] ; then
 
     if ! [ ${numBackupDirs} == 0 ] ; then
         # we have a backup directory to kill
-        echo "deleteting backup directory ${deleteBackupDir}" | tee -a ${VERIFY_LOG_NAME}
+        echo "deleting backup directory ${deleteBackupDir}" | tee -a ${VERIFY_LOG_NAME}
         rm -rf ${deleteBackupDir}
     fi
 fi
@@ -58,7 +58,7 @@ for backupDir in ${HOT_BACKUP_DIR}/* ; do
     mstop
     
     # start using the given data directory
-    mstart-backup ${backupDir}
+    mstart-backup ${backupDir}/mysql_data_dir
     
     popd
     
