@@ -22,12 +22,19 @@ rm -rf ${testDir}
 mkdir ${testDir}
 
 # dump the running server
+#pushd $DB_DIR
+#mstop
+#mstart
+#popd
 ./v.bash ${testDir}/master 
+pushd $DB_DIR
 mstop
+popd
 
 # dump the backup
 pushd $DB_DIR
-mstart-backup ${HOT_BACKUP_DIR}
+echo ${HOT_BACKUP_DIR}/mysql_data_dir
+mstart-backup ${HOT_BACKUP_DIR}/mysql_data_dir
 popd
 ./v.bash ${testDir}/backup
 mstop

@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/bash
 
 if [ -z "$DB_DIR" ]; then
     echo "Need to set DB_DIR"
@@ -8,6 +8,11 @@ if [ ! -d "$DB_DIR" ]; then
     echo "Need to create directory DB_DIR"
     exit 1
 fi
+if [ -z "$MYSQL_MULTI_DIR" ]; then
+    echo "Need to set MYSQL_MULTI_DIR"
+    exit 1
+fi
+
 
 export TOKUDB_HOT_BACKUP_BOLT_ON
 export HOT_BACKUP_DIR
@@ -70,6 +75,24 @@ export TOKUDB_ROW_FORMAT=tokudb_${TOKUDB_COMPRESSION}
 echo "`date` | Creating database from ${TARBALL} in ${DB_DIR}"
 pushd $DB_DIR
 mkdb-quiet $TARBALL
+
+
+# Here is where all the log dir and data dir folders get created so that if
+# they ARE configured, the system will be able to recognize them and point to
+# a location that will allow the DB to start.  Additionally, this code could be
+# put inside a control loop that checks for a multidir config, but having these empty
+# directories won't really cause any problems if mysqld is started without any
+# knowledge of them.
+
+if [ ${MYSQL_MULTI_DIR} == 1 ]; then
+    mkdir ${TOKUDB_DATA_DIR}
+    mkdir ${TOKUDB_LOG_DIR}
+   # We need to move the tokulog file since it starts out in the data directory upon
+   # opening the blank tarball. Always toggle this one in tandem with the tokudb_log_dir
+   # in the echo statements to my.cnf below.
+#    mv ${DB_DIR}/data/*.tokulog* ${TOKUDB_LOG_DIR}/
+    mkdir ${TOKUDB_BINLOG}
+fi
 popd
 
 
@@ -79,7 +102,26 @@ mkdir $HOT_BACKUP_DIR
 echo "`date` | Configuring my.cnf and starting database"
 pushd $DB_DIR
 
+# Here is the section that you can use to toggle on/off any of the multidir
+# configurations you want to explore.  In particular, the tokudb_data dir, the
+# tokudb_log and the binlog can all be turned on or off.  Simply comment or
+# uncomment the ones you want and the resulting choice will go into the
+# my.cnf file which is used during the mstart subroutine.  The --defaults-file
+# option is used exclusively to configure mysqld.
+
+#echo "server-id=1" >> my.cnf
+#echo "binlog_format=ROW" >> my.cnf
+#echo "log_bin=${TOKUDB_BINLOG}/foo" >> my.cnf
+echo "tokudb_data_dir=${TOKUDB_DATA_DIR}" >> my.cnf
+#echo "tokudb_log_dir=${TOKUDB_LOG_DIR}" >> my.cnf
+
+# Here are some more mysqld options that are not specifically related to multidir
+# or single dir hot backup, but can be modified nonetheless.
+
+# This setting was used to debug a corrupted InnoDB table during hotbackup.
+# We have learned that native io should be disabled.
 #echo "innodb_use_native_aio=0" >> my.cnf
+
 echo "tokudb_read_block_size=${TOKUDB_READ_BLOCK_SIZE}" >> my.cnf
 echo "tokudb_row_format=${TOKUDB_ROW_FORMAT}" >> my.cnf
 echo "tokudb_backup_throttle=${TOKUDB_BACKUP_THROTTLE}" >> my.cnf
@@ -122,7 +164,6 @@ fi
 retVal=$?
 if [ ${retVal} -ne 0 ] ; then
     echo "backup either finished too fast or didn't run at all, exiting"
-    cat backup.log
     exit 1
 fi
 
@@ -145,4 +186,4 @@ while [ ${backupDone} == 0 ] ; do
 done
 
 echo "Performing backup verification"
-./verify-backup.bash
+./verify-backup-multi.bash
